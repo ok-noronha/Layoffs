@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flask App</title>
+</head>
+<body>
+    <h1>Welcome to the Flask App</h1>
+    <form action="/" method="POST">
+        <label for="company">Company Name:</label>
+        <input type="text" id="company" name="company"><br><br>
+
+        <label for="industry">Industry:</label>
+        <input type="text" id="industry" name="industry"><br><br>
+
+        <label for="date">Date:</label>
+        <input type="date" id="date" name="date"><br><br>
+
+        <label for="country">Country:</label>
+        <input type="text" id="country" name="country"><br><br>
+
+        <label for="total_laid_off">Total Laid Off:</label>
+        <input type="number" id="total_laid_off" name="total_laid_off"><br><br>
+
+        <input type="submit" value="Submit">
+    </form>
+
+    {% if data %}
+        <h2>New Data:</h2>
+        <p>Company Name: {{ data.company_name[0] }}</p>
+        <p>Industry: {{ data.industry[0] }}</p>
+        <p>Date: {{ data.date[0] }}</p>
+        <p>Country: {{ data.country[0] }}</p>
+        <p>Total Laid Off: {{ data.total_laid_off[0] }}</p>
+
+        {% if predictions %}
+            <h2>Predictions:</h2>
+            <ul>
+                <li>Random Forest: {{ predictions[0] }}</li>
+                <li>Naive Bayes: {{ predictions[1] }}</li>
+                <li>Ensemble: {{ predictions[2] }}</li>
+            </ul>
+        {% endif %}
+    {% endif %}
+</body>
+</html>
