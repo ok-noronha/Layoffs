@@ -151,7 +151,7 @@ def train():
     return render_template('index.html', evaluation_results=evaluation_results)
 
 
-# if __name__ == "__main__":
-#     app.run(debug=False, host='127.0.0.1', port=1000)
+if __name__ == "__main__":
+    app.run(debug=False, host='0.0.0.0', port=8000)
 
-serve(app, port=8080, host="0.0.0.0")
+serve(app, host='0.0.0.0', port=8000)
