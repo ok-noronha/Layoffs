@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Layoff Reason Prediction</title>
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        th,
+        td {
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding: 8px;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-gap: 20px;
+        }
+
+        h1 {
+            grid-column: span 2;
+            text-align: center;
+        }
+
+        form {
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        label {
+            font-weight: bold;
+        }
+
+        input[type="text"] {
+            width: calc(100% - 20px);
+            padding: 8px;
+            margin: 5px 0 20px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        button[type="submit"] {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            float: right;
+        }
+
+        button[type="submit"]:hover {
+            background-color: #45a049;
+        }
+
+        .predictions {
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .train {
+            padding: 20px;
+            text-align: center;
+        }
+
+        .metrics {
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Layoff Reason Prediction</h1>
+    <div>
+        <form method="post">
+            <label for="company">Company Name:</label>
+            <input type="text" id="company" name="company" required><br>
+            <label for="industry">Industry:</label>
+            <input type="text" id="industry" name="industry" required><br>
+            <label for="date">Date:</label>
+            <input type="text" id="date" name="date" required><br> <!-- Keep as text input -->
+            <label for="country">Country:</label>
+            <input type="text" id="country" name="country" required><br>
+            <label for="total_laid_off">Total Laid Off:</label>
+            <input type="text" id="total_laid_off" name="total_laid_off" required><br>
+            <button type="submit">Predict</button>
+        </form>
+
+        {% if data %}
+        <div class="predictions">
+            <h2>Predictions:</h2>
+            <ul>
+                <li><strong>Random Forest Prediction:</strong> {{ predictions[0] }}</li>
+                <li><strong>Naive Bayes Prediction:</strong> {{ predictions[1] }}</li>
+                <li><strong>Best Naive Bayes Prediction:</strong> {{ predictions[2] }}</li>
+                <li><strong>Ensemble Prediction:</strong> {{ predictions[3] }}</li>
+            </ul>
+        </div>
+        {% endif %}
+    </div>
+
+    <div>
+        <div class="train">
+            <button type="button" onclick="train()">Train Models</button>
+        </div>
+        {% if evaluation_results %}
+        <div class="metrics">
+            {% for result in evaluation_results %}
+            <h2>{{ result.model_name }} Evaluation</h2>
+            <table>
+                <tr>
+                    <th>Metric</th>
+                    <th>Value</th>
+                </tr>
+                <tr>
+                    <td>Accuracy</td>
+                    <td>{{ result.accuracy }}</td>
+                </tr>
+                <tr>
+                    <th colspan="2">Classification Report</th>
+                </tr>
+                {% set lines = result.classification_report.split('\n')[0:-5] %}
+                {% set heads = ["Reasons"] + lines[0].split() %}
+                {% for head in heads %}
+                <td>{{ head }}</td>
+                {% endfor %}
+                {% for line in lines[2:] %}
+                <tr>
+                    {% set columns = line.split() %}
+                    <td>{{ columns[0] ~ ' ' ~ columns[1] }}</td>
+                    {% for column in columns[2:] %}
+                    <td>{{ column }}</td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+                <tr>
+                    <th colspan="2">Confusion Matrix</th>
+                </tr>
+                {% for row in result.confusion_matrix %}
+                <tr>
+                    {% for value in row %}
+                    <td>{{ value }}</td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+                <tr>
+                    <th colspan="2">Cross Validation Scores</th>
+                </tr>
+                <tr>
+                    {% for score in result.cross_val_scores %}
+                    <td>{{ score }}</td>
+                    {% endfor %}
+                </tr>
+            </table>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        function train() {
+            window.location.href = '/?eval=true';
+        }
+    </script>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+    <script>
+        $(function() {
+            $("#date").datepicker(); // Initialize datepicker
+        });
+    </script>
+</body>
+
+</html>
