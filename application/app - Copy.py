@@ -25,43 +25,26 @@ def read_dataset():
     return pd.read_csv("../dataset/origs.csv")
 
 def preprocess_data(df):
-    # Preprocess the data
     features = ['company', 'industry', 'date', 'country', 'total_laid_off']
     X = df[features]
     y = df['Reason for layoffs']
-
-    # Convert categorical features to numerical using CountVectorizer
     vectorizer = CountVectorizer()
     X_vectorized = vectorizer.fit_transform(X.astype(str).apply(lambda x: ' '.join(x), axis=1))
-    feature_names = vectorizer.get_feature_names_out()
-
-    # Split the data into training and testing sets
-    X_train, X_test, y_train, y_test = train_test_split(X_vectorized, y, test_size=0.2, random_state=42)
-
-    return X_train, X_test, y_train, y_test
+    return X_vectorized, y
 
 def train_model(X_train, X_test, y_train, y_test):
-
-    nb_model = MultinomialNB()
-    nb_model.fit(X_train, y_train)
-
     oversampler = RandomOverSampler(random_state=42)
     X_resampled, y_resampled = oversampler.fit_resample(X_train, y_train)
-
-    # Experiment with Different Models (Random Forest)
     rf_model = RandomForestClassifier(random_state=42)
     rf_model.fit(X_resampled, y_resampled)
-    
     param_grid = {'alpha': [0.1, 1.0, 10.0]}
-    nbbest_model = MultinomialNB()
+    nb_model = MultinomialNB()
     grid_search = GridSearchCV(nb_model, param_grid, cv=5)
     grid_search.fit(X_resampled, y_resampled)
     best_nb_model = grid_search.best_estimator_
-
     ensemble_model = VotingClassifier(estimators=[('nb', best_nb_model), ('rf', rf_model)], voting='soft')
     ensemble_model.fit(X_resampled, y_resampled)
-
-    return nb_model, rf_model, best_nb_model, ensemble_model
+    return rf_model, best_nb_model, ensemble_model
 
 
 def evaluate_model(model, X_test, y_test):
@@ -79,11 +62,8 @@ def route():
 @app.route("/", methods=['POST'])
 def login():
     df = read_dataset()
-    df.dropna(inplace=True)
-    # Drop columns with any NaN values
-    df.dropna(axis=1, inplace=True)
-    Xt, yt, xtt, ytt = preprocess_data(df)
-    nb, rf, nbbest, ensemble = train_model(Xt, yt, xtt, ytt)
+    X, y = preprocess_data(df)
+    rf, nb, ensemble = train_model(*train_test_split(X, y, test_size=0.2, random_state=42))
     new_data = {
         'company_name': [request.form.get("company"),],
         'industry': [request.form.get("industry"),],
@@ -94,11 +74,10 @@ def login():
     new_df = pd.DataFrame(new_data)
     vectorizer = CountVectorizer()
     new_X_vectorized = vectorizer.transform(new_df.astype(str).apply(lambda x: ' '.join(x), axis=1))
-    nb_predictions = nb.predict(new_X_vectorized)
     rf_predictions = rf.predict(new_X_vectorized)
-    nbbest_predictions = nbbest.predict(new_X_vectorized)
+    nb_predictions = nb.predict(new_X_vectorized)
     ensemble_predictions = ensemble.predict(new_X_vectorized)
-    return render_template("index.html", data=new_data, predictions=[rf_predictions, nb_predictions, nbbest_predictions, ensemble_predictions])
+    return render_template("index.html", data=new_data, predictions=[rf_predictions, nb_predictions, ensemble_predictions])
 
 if __name__ == "__main__":
     app.run(debug=True)
