@@ -1,7 +1,5 @@
 from flask import Flask, redirect, request, render_template
-from flask_mysqldb import MySQL
 import joblib
-import pickle
 import pandas as pd
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.model_selection import cross_val_score, train_test_split
@@ -10,17 +8,9 @@ from imblearn.over_sampling import RandomOverSampler
 from sklearn.ensemble import RandomForestClassifier, VotingClassifier
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.model_selection import GridSearchCV
-import time
+from waitress import serve
 
 app = Flask(__name__)
-
-# MySQL configuration (replace with your MySQL server details)
-app.config['MYSQL_HOST'] = 'localhost'
-app.config['MYSQL_USER'] = 'root'
-app.config['MYSQL_PASSWORD'] = '0000'
-app.config['MYSQL_DB'] = 'flask'
-
-mysql = MySQL(app)
 
 app.secret_key = 'your_secret_key'
 
@@ -100,7 +90,7 @@ def evaluate_model(models, X_test, y_test):
             "confusion_matrix": confusion_matrix_arr,
             "cross_val_scores": cross_val_scores.tolist()  # Convert to list for easier JSON serialization
         })
-        print(evaluation_results)
+        # print(evaluation_results)
     return evaluation_results
     # y_pred = model.predict(X_test)
     # accuracy = accuracy_score(y_test, y_pred)
@@ -161,5 +151,7 @@ def train():
     return render_template('index.html', evaluation_results=evaluation_results)
 
 
-if __name__ == "__main__":
-    app.run(debug=False, host='0.0.0.0', port=8000)
+# if __name__ == "__main__":
+#     app.run(debug=False, host='127.0.0.1', port=1000)
+
+serve(app, port=8080, host="0.0.0.0")
