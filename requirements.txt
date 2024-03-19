@@ -42,7 +42,6 @@ fsspec==2024.3.0
 geographiclib==2.0
 geopandas==0.14.3
 geopy==2.4.1
-gunicorn==21.2.0
 holidays==0.44
 htmlmin==0.1.12
 idna==3.6
