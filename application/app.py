@@ -1,5 +1,6 @@
 from flask import Flask, request, render_template
 from flask_mysqldb import MySQL
+import joblib
 import pandas as pd
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.model_selection import train_test_split
@@ -22,23 +23,21 @@ mysql = MySQL(app)
 app.secret_key = 'your_secret_key'
 
 def read_dataset():
-    return pd.read_csv("../dataset/origs.csv")
+    return pd.read_csv("C:\\Users\\670310840\\Downloads\\Documents\\GitHub\\Layoffs\\dataset\\origs.csv")
 
 def preprocess_data(df):
     # Preprocess the data
     features = ['company', 'industry', 'date', 'country', 'total_laid_off']
     X = df[features]
-    y = df['Reason for layoffs']
+    y = df['Reason for layoffs']  # 'extra_column' is the target variable we want to predict and rename as 'reason'
 
     # Convert categorical features to numerical using CountVectorizer
     vectorizer = CountVectorizer()
     X_vectorized = vectorizer.fit_transform(X.astype(str).apply(lambda x: ' '.join(x), axis=1))
-    feature_names = vectorizer.get_feature_names_out()
-
+    
     # Split the data into training and testing sets
     X_train, X_test, y_train, y_test = train_test_split(X_vectorized, y, test_size=0.2, random_state=42)
-
-    return X_train, X_test, y_train, y_test
+    return X_train, X_test, y_train, y_test, vectorizer
 
 def train_model(X_train, X_test, y_train, y_test):
 
@@ -82,7 +81,7 @@ def login():
     df.dropna(inplace=True)
     # Drop columns with any NaN values
     df.dropna(axis=1, inplace=True)
-    Xt, yt, xtt, ytt = preprocess_data(df)
+    Xt, yt, xtt, ytt, vect = preprocess_data(df)
     nb, rf, nbbest, ensemble = train_model(Xt, yt, xtt, ytt)
     new_data = {
         'company_name': [request.form.get("company"),],
@@ -93,13 +92,12 @@ def login():
     }
     print(new_data)
     new_df = pd.DataFrame(new_data)
-    vectorizer = CountVectorizer()
-    new_X_vectorized = vectorizer.transform(new_df.astype(str).apply(lambda x: ' '.join(x), axis=1))
+    new_X_vectorized = vect.transform(new_df.astype(str).apply(lambda x: ' '.join(x), axis=1))
     nb_predictions = nb.predict(new_X_vectorized)
     rf_predictions = rf.predict(new_X_vectorized)
     nbbest_predictions = nbbest.predict(new_X_vectorized)
     ensemble_predictions = ensemble.predict(new_X_vectorized)
-    return render_template("index.html", data=new_data, predictions=[rf_predictions, nb_predictions, nbbest_predictions, ensemble_predictions])
+    return render_template("index.html", data=new_data, predictions=[rf_predictions[0], nb_predictions[0], nbbest_predictions[0], ensemble_predictions[0]])
 
 if __name__ == "__main__":
     app.run(debug=True)
