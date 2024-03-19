@@ -91,6 +91,7 @@ def login():
         'country': [request.form.get("country"),],
         'total_laid_off': [request.form.get("total_laid_off"),],
     }
+    print(new_data)
     new_df = pd.DataFrame(new_data)
     vectorizer = CountVectorizer()
     new_X_vectorized = vectorizer.transform(new_df.astype(str).apply(lambda x: ' '.join(x), axis=1))
