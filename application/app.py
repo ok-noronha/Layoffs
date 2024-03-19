@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template
+from flask import Flask, redirect, request, render_template
 from flask_mysqldb import MySQL
 import joblib
 import pickle
@@ -100,6 +100,7 @@ def evaluate_model(models, X_test, y_test):
             "confusion_matrix": confusion_matrix_arr,
             "cross_val_scores": cross_val_scores.tolist()  # Convert to list for easier JSON serialization
         })
+        print(evaluation_results)
     return evaluation_results
     # y_pred = model.predict(X_test)
     # accuracy = accuracy_score(y_test, y_pred)
@@ -110,7 +111,11 @@ def evaluate_model(models, X_test, y_test):
 
 @app.route("/", methods=["GET",])
 def route():
-    return render_template("index.html")
+    eval = request.args.get("eval")
+    print(eval)
+    if not eval:
+        return render_template("index.html")
+    return train()
 
 @app.route("/", methods=['POST'])
 def pred():
@@ -139,10 +144,10 @@ def pred():
     nbbest_predictions = nbbest.predict(new_X_vectorized)
     ensemble_predictions = ensemble.predict(new_X_vectorized)
     # xttvec = vect.transform(xtt.astype(str).apply(lambda x: ' '.join(x), axis=1))
-    print(evaluate_model(rf,xtt,ytt))
-    return render_template("index.html", data=new_data, predictions=[rf_predictions[0], nb_predictions[0], nbbest_predictions[0], ensemble_predictions[0]], metrics=[evaluate_model(x,xtt,ytt) for x in models])
+    # print(evaluate_model(rf,xtt,ytt))
+    evaluation_results = evaluate_model(models, xtt, ytt)
+    return render_template("index.html", data=new_data, predictions=[rf_predictions[0], nb_predictions[0], nbbest_predictions[0], ensemble_predictions[0]], evaluation_results=evaluation_results)
 
-@app.route("/results",methods=["GET"])
 def train():
     df = read_dataset()
     df.dropna(inplace=True)
@@ -152,6 +157,7 @@ def train():
     models=[nb, rf, nbbest, ensemble]
     evaluation_results = evaluate_model(models, xtt, ytt)
     print(evaluation_results)
+    # return redirect("/?evaluation_results=",str(evaluation_results))
     return render_template('index.html', evaluation_results=evaluation_results)
 
 

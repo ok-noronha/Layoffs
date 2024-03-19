@@ -6,6 +6,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Layoff Reason Prediction</title>
     <style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        th,
+        td {
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding: 8px;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
         body {
             font-family: Arial, sans-serif;
             margin: 0;
@@ -84,7 +100,7 @@
             <label for="industry">Industry:</label>
             <input type="text" id="industry" name="industry" required><br>
             <label for="date">Date:</label>
-            <input type="text" id="date" name="date" required><br>
+            <input type="text" id="date" name="date" required><br> <!-- Keep as text input -->
             <label for="country">Country:</label>
             <input type="text" id="country" name="country" required><br>
             <label for="total_laid_off">Total Laid Off:</label>
@@ -109,10 +125,8 @@
         <div class="train">
             <button type="button" onclick="train()">Train Models</button>
         </div>
-
-
+        {% if evaluation_results %}
         <div class="metrics">
-            {% if evaluation_results %}
             {% for result in evaluation_results %}
             <h2>{{ result.model_name }} Evaluation</h2>
             <table>
@@ -125,17 +139,24 @@
                     <td>{{ result.accuracy }}</td>
                 </tr>
                 <tr>
-                    <td colspan="2">Classification Report</td>
+                    <th colspan="2">Classification Report</th>
                 </tr>
-                {% for line in result.classification_report.split('\n')[2:-5] %}
+                {% set lines = result.classification_report.split('\n')[0:-5] %}
+                {% set heads = ["Reasons"] + lines[0].split() %}
+                {% for head in heads %}
+                <td>{{ head }}</td>
+                {% endfor %}
+                {% for line in lines[2:] %}
                 <tr>
-                    {% for column in line.split() %}
+                    {% set columns = line.split() %}
+                    <td>{{ columns[0] ~ ' ' ~ columns[1] }}</td>
+                    {% for column in columns[2:] %}
                     <td>{{ column }}</td>
                     {% endfor %}
                 </tr>
                 {% endfor %}
                 <tr>
-                    <td colspan="2">Confusion Matrix</td>
+                    <th colspan="2">Confusion Matrix</th>
                 </tr>
                 {% for row in result.confusion_matrix %}
                 <tr>
@@ -145,7 +166,7 @@
                 </tr>
                 {% endfor %}
                 <tr>
-                    <td colspan="2">Cross Validation Scores</td>
+                    <th colspan="2">Cross Validation Scores</th>
                 </tr>
                 <tr>
                     {% for score in result.cross_val_scores %}
@@ -154,15 +175,22 @@
                 </tr>
             </table>
             {% endfor %}
-            {% endif %}
         </div>
-
+        {% endif %}
     </div>
 
     <script>
         function train() {
-            window.location.href = '/results';
+            window.location.href = '/?eval=true';
         }
+    </script>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+    <script>
+        $(function() {
+            $("#date").datepicker(); // Initialize datepicker
+        });
     </script>
 </body>
 
