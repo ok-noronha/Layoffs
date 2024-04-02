@@ -1,0 +1,6 @@
+pandas
+Flask
+joblib
+scikit-learn
+imblearn
+waitress
